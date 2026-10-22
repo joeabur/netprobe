@@ -118,6 +118,12 @@ def _parser() -> argparse.ArgumentParser:
     dns_check.add_argument("--name", required=True, help="localhost or a reserved .test name")
     dns_check.add_argument("--type", choices=("A", "AAAA", "MX", "NS", "TXT"), default="A")
     dns_check.add_argument("--timeout", type=float, default=2.0, help="maximum 3 seconds")
+    dns_check.add_argument(
+        "--artifact-dir",
+        type=Path,
+        default=Path("netprobe-data/assessments"),
+        help="directory for private assessment JSON records",
+    )
     dns_check.add_argument("--dry-run", action="store_true", help="validate without DNS traffic")
     dns_check.add_argument(
         "--i-have-authorization",
@@ -210,6 +216,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if not args.i_have_authorization:
             print("active DNS check requires --i-have-authorization", file=sys.stderr)
             return EXIT_INPUT_ERROR
+        started_at = datetime.now(UTC)
         dns_result = asyncio.run(
             query_dns(
                 scope,
@@ -219,7 +226,49 @@ def main(argv: Sequence[str] | None = None) -> int:
                 timeout=args.timeout,
             )
         )
-        print(json.dumps(dns_result.as_dict(), indent=2))
+        metadata = AssessmentMetadata(
+            tool_version=__version__,
+            scope_file=str(args.scope),
+            authorized_targets=[target.original for target in scope.authorized_targets],
+            exclusions=[target.original for target in scope.exclusions],
+            authorization_confirmed=scope.authorization_confirmed,
+            profile="dns-check",
+            started_at=started_at,
+            completed_at=datetime.now(UTC),
+            limitations=[
+                "Single explicit DNS query to a scoped loopback resolver.",
+                "Query names are restricted to localhost and reserved .test names.",
+                "No DNSSEC validation, zone transfer, discovery, or public resolver use.",
+                "DNS record observations alone do not establish a vulnerability.",
+            ],
+        )
+        dns_observation = {
+            "host": dns_result.server,
+            "port": 53,
+            "protocol": "dns",
+            "status": dns_result.status,
+            "observed_at": dns_result.observed_at,
+            "details": {
+                "name": dns_result.name,
+                "record_type": dns_result.record_type,
+                "answers": list(dns_result.answers),
+                "detail": dns_result.detail,
+            },
+        }
+        artifact = {
+            "schema_version": 1,
+            "metadata": metadata.model_dump(mode="json"),
+            "observations": [dns_observation],
+            "findings": [],
+        }
+        try:
+            artifact_path = write_json_artifact(args.artifact_dir, metadata.assessment_id, artifact)
+        except ArtifactError as exc:
+            print(f"artifact error: {exc}", file=sys.stderr)
+            return EXIT_INPUT_ERROR
+        print(
+            json.dumps(dns_result.as_dict() | {"assessment_artifact": str(artifact_path)}, indent=2)
+        )
         return EXIT_OK
 
     if args.command == "enumerate":

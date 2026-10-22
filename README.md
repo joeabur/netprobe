@@ -45,7 +45,7 @@ On Windows, activate with `.venv\\Scripts\\activate`.
 
 The scope file must set `authorization_confirmed: true`. This is a record, not proof of legal authorization. A dry run validates scope and prints a preview only. Active scans also require the explicit acknowledgment flag. Connection refusal is reported as closed; timeouts and other socket errors are reported as unknown.
 
-`check-http` and `assess` save private assessment records under `netprobe-data/assessments/`. `report` renders them as JSON, CSV, or escaped HTML under `netprobe-data/reports/`; existing reports are not replaced unless `--overwrite` is supplied. `dns-check` is a separate single explicit query and does not perform discovery or zone transfer. See [docs/walkthrough.md](docs/walkthrough.md) for the isolated end-to-end lab.
+`check-http`, `assess`, and active `dns-check` save private assessment records under `netprobe-data/assessments/`. DNS observations can be rendered with the standard JSON, CSV, or escaped HTML report command. Existing reports are not replaced unless `--overwrite` is supplied. `dns-check` is a single explicit query and does not perform discovery or zone transfer. See [docs/walkthrough.md](docs/walkthrough.md) for the isolated end-to-end lab.
 
 ## Architecture
 

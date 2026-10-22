@@ -87,6 +87,53 @@ def test_dns_check_dry_run_has_no_network_activity(capsys, monkeypatch) -> None:
     assert '"network_activity": false' in capsys.readouterr().out
 
 
+def test_active_dns_check_saves_reproducible_artifact(tmp_path, capsys, monkeypatch) -> None:
+    from datetime import UTC, datetime
+
+    from netprobe.dns import DnsObservation
+
+    result_observation = DnsObservation(
+        server="127.0.0.1",
+        name="lab.test.",
+        record_type="A",
+        observed_at=datetime.now(UTC).isoformat(),
+        status="answered",
+        answers=("127.0.0.2",),
+        detail="single explicit test query",
+    )
+
+    def fake_run(awaitable):
+        awaitable.close()
+        return result_observation
+
+    monkeypatch.setattr("netprobe.cli.asyncio.run", fake_run)
+    artifact_dir = tmp_path / "dns-artifacts"
+    result = main(
+        [
+            "dns-check",
+            "--scope",
+            str(FIXTURES / "valid_scope.yaml"),
+            "--server",
+            "127.0.0.1",
+            "--name",
+            "lab.test",
+            "--type",
+            "A",
+            "--i-have-authorization",
+            "--artifact-dir",
+            str(artifact_dir),
+        ]
+    )
+    assert result == EXIT_OK
+    output = json.loads(capsys.readouterr().out)
+    artifact_path = Path(output["assessment_artifact"])
+    stored = json.loads(artifact_path.read_text(encoding="utf-8"))
+    assert stored["metadata"]["profile"] == "dns-check"
+    assert stored["observations"][0]["details"]["answers"] == ["127.0.0.2"]
+    assert stored["findings"] == []
+    assert artifact_path.stat().st_mode & 0o777 == 0o600
+
+
 def test_invalid_scope_returns_input_exit_code(capsys) -> None:
     path = FIXTURES / "invalid_scope.yaml"
     assert main(["validate-scope", "--scope", str(path)]) == EXIT_INPUT_ERROR

@@ -85,6 +85,29 @@ def test_html_report_escapes_untrusted_fields() -> None:
     assert "<img src=x onerror=alert(1)>" not in rendered
 
 
+def test_dns_observations_render_in_html_and_csv() -> None:
+    document = artifact()
+    document["metadata"]["profile"] = "dns-check"
+    document["observations"] = [
+        {
+            "host": "127.0.0.1",
+            "port": 53,
+            "protocol": "dns",
+            "status": "answered",
+            "details": {
+                "name": "lab.test.",
+                "record_type": "A",
+                "answers": ["127.0.0.2"],
+            },
+        }
+    ]
+    assert "lab.test." in render_report(document, "html")
+    rows = list(csv.DictReader(io.StringIO(render_report(document, "csv"))))
+    observation = next(row for row in rows if row["record_type"] == "observation")
+    assert observation["observation_protocol"] == "dns"
+    assert "127.0.0.2" in observation["evidence"]
+
+
 def test_artifact_storage_is_exclusive_and_loads_schema(tmp_path: Path) -> None:
     path = write_json_artifact(tmp_path, "assessment-1", artifact())
     assert load_json_artifact(path)["metadata"]["assessment_id"] == "assessment-test-1"

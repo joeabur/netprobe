@@ -73,7 +73,11 @@ DNS is a single explicit query, not discovery. Preview a query for a local resol
 
     netprobe dns-check --scope examples/scope.example.yaml --server 127.0.0.1 --name lab.test --type A --dry-run
 
-An active query requires that DNS service on loopback plus the authorization acknowledgment. Names are limited to `localhost` and `.test`; only A, AAAA, MX, NS, and TXT are supported, with a three-second timeout cap. It does not contact a public resolver or perform zone transfers.
+An active query requires that DNS service on loopback plus the authorization acknowledgment:
+
+    netprobe dns-check --scope examples/scope.example.yaml --server 127.0.0.1 --name lab.test --type A --i-have-authorization
+
+Names are limited to `localhost` and `.test`; only A, AAAA, MX, NS, and TXT are supported, with a three-second timeout cap. It does not contact a public resolver or perform zone transfers. Active results are saved as private assessment artifacts and can be rendered through the normal `report --assessment latest` workflow. DNS answers are observations, not vulnerability findings.
 
 ## 7. Generate JSON, CSV, and HTML reports
 
