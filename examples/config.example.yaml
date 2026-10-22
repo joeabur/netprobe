@@ -1,0 +1,3 @@
+# Reserved for future local-only configuration; scope enforcement cannot be disabled.
+profile: common
+logging: concise

@@ -1,0 +1,6 @@
+# This file demonstrates scope syntax; authorized targets are local-only in v0.1.0.
+authorized_targets:
+  - 127.0.0.1
+  - "::1"
+exclusions: []
+authorization_confirmed: true

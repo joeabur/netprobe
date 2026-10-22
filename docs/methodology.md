@@ -1,0 +1,5 @@
+# Methodology and current limitations
+
+Version 0.1.0 is a loopback-only local-lab tool. It validates explicitly provided scope, supports bounded TCP connect checks and one-host orchestration, and can collect limited HTTP, SSH, SMTP, FTP, and TLS observations. DNS checks are explicit single queries to a scoped loopback resolver for `localhost` or reserved `.test` names; no zone transfer, broad enumeration, or public DNS queries are implemented. TLS inspection reads a leaf certificate and reports date validity and literal IP SAN match but does not validate trust chain or a DNS service name. HTTP uses one `HEAD /` request; banners and server headers are unverified clues. `authorization_confirmed: true` records user acknowledgement only.
+
+No service observation is automatically a security finding. The HTTP plugin may record a low-severity, requires-validation lead for selected absent security headers or cookie attributes, based only on one HEAD response. Cookie values are not retained. Results are limited to evidence actually collected and include verification limitations. Only isolated local test fixtures are appropriate for this release.

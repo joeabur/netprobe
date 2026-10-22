@@ -1,0 +1,3 @@
+authorized_targets:
+  - 127.0.0.1
+authorization_confirmed: true

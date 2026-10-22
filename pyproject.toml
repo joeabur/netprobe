@@ -1,0 +1,63 @@
+[build-system]
+requires = ["hatchling>=1.26,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "netprobe"
+version = "0.1.0"
+description = "Loopback-only network assessment utilities for isolated labs"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "NetProbe contributors" }]
+dependencies = [
+  "cryptography>=50,<51",
+  "dnspython>=2.7,<3",
+  "Jinja2>=3.1.5,<4",
+  "pydantic>=2.9,<3",
+  "PyYAML>=6.0.2,<7",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.13,<2",
+  "pytest>=8.3,<9",
+  "pytest-asyncio>=0.24,<1",
+  "ruff>=0.8,<1",
+  "bandit>=1.8,<2",
+  "types-PyYAML>=6.0.12,<7",
+]
+
+[project.scripts]
+netprobe = "netprobe.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/netprobe"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["/.venv", "/.venv-1", "/dist", "/build", "/.git"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+mypy_path = "src"
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+severity = "medium"
+confidence = "medium"
